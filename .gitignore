@@ -1,0 +1,32 @@
+# env files
+.env
+.env.local
+.env.*.local
+**/.env
+**/.env.local
+
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+
+# binary/archive files
+*.zip
+
+# logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+settings.json
+
+# Claude Code local config
+.claude/
