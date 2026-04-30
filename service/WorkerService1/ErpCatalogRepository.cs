@@ -69,17 +69,17 @@ namespace WorkerService1
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                string codigo = reader.GetString("codigo");
-                string nombre = reader.GetString("nombre");
-                decimal precio     = reader.IsDBNull(reader.GetOrdinal(precioCol))    ? 0m : reader.GetDecimal(precioCol);
-                decimal precioBase = reader.IsDBNull(reader.GetOrdinal("preciofin1")) ? 0m : reader.GetDecimal("preciofin1");
-                string marca    = reader.IsDBNull(reader.GetOrdinal("marca"))           ? "" : reader.GetString("marca");
-                string unidad   = reader.IsDBNull(reader.GetOrdinal("unidad"))          ? "" : reader.GetString("unidad");
-                string grupo    = reader.IsDBNull(reader.GetOrdinal("grupo_nombre"))    ? "" : reader.GetString("grupo_nombre");
-                string subgrupo = reader.IsDBNull(reader.GetOrdinal("subgrupo_nombre")) ? "" : reader.GetString("subgrupo_nombre");
-                double existencia    = reader.IsDBNull(reader.GetOrdinal("existencia"))    ? 0  : reader.GetDouble("existencia");
-                DateTime fechaModifi = reader.IsDBNull(reader.GetOrdinal("fechamodifi"))   ? DateTime.MinValue : reader.GetDateTime("fechamodifi");
-                DateTime? lastSynced = reader.IsDBNull(reader.GetOrdinal("last_synced_to_shopify")) ? null : reader.GetDateTime("last_synced_to_shopify");
+                string codigo = reader.GetString(reader.GetOrdinal("codigo"));
+                string nombre = reader.GetString(reader.GetOrdinal("nombre"));
+                decimal precio     = reader.IsDBNull(reader.GetOrdinal(precioCol))    ? 0m : reader.GetDecimal(reader.GetOrdinal(precioCol));
+                decimal precioBase = reader.IsDBNull(reader.GetOrdinal("preciofin1")) ? 0m : reader.GetDecimal(reader.GetOrdinal("preciofin1"));
+                string marca    = reader.IsDBNull(reader.GetOrdinal("marca"))           ? "" : reader.GetString(reader.GetOrdinal("marca"));
+                string unidad   = reader.IsDBNull(reader.GetOrdinal("unidad"))          ? "" : reader.GetString(reader.GetOrdinal("unidad"));
+                string grupo    = reader.IsDBNull(reader.GetOrdinal("grupo_nombre"))    ? "" : reader.GetString(reader.GetOrdinal("grupo_nombre"));
+                string subgrupo = reader.IsDBNull(reader.GetOrdinal("subgrupo_nombre")) ? "" : reader.GetString(reader.GetOrdinal("subgrupo_nombre"));
+                double existencia    = reader.IsDBNull(reader.GetOrdinal("existencia"))    ? 0  : reader.GetDouble(reader.GetOrdinal("existencia"));
+                DateTime fechaModifi = reader.IsDBNull(reader.GetOrdinal("fechamodifi"))   ? DateTime.MinValue : reader.GetDateTime(reader.GetOrdinal("fechamodifi"));
+                DateTime? lastSynced = reader.IsDBNull(reader.GetOrdinal("last_synced_to_shopify")) ? null : reader.GetDateTime(reader.GetOrdinal("last_synced_to_shopify"));
                 bool metadataChanged = lastSynced == null || fechaModifi > lastSynced.Value;
 
                 result.Add(new ErpProduct(codigo, nombre, precio, precioBase, marca, grupo, subgrupo,
@@ -98,7 +98,7 @@ namespace WorkerService1
                 "SELECT codigo FROM articulo WHERE nousaweb = 0 AND usointerno = 0 AND discont = 0", cn);
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
-                skus.Add(reader.GetString("codigo").Trim());
+                skus.Add(reader.GetString(reader.GetOrdinal("codigo")).Trim());
             return skus;
         }
 
@@ -117,8 +117,8 @@ namespace WorkerService1
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                string groupName = reader.GetString("grupo")?.Trim() ?? "";
-                string subName   = reader.IsDBNull(reader.GetOrdinal("subgrupo")) ? "" : reader.GetString("subgrupo")?.Trim() ?? "";
+                string groupName = reader.GetString(reader.GetOrdinal("grupo"))?.Trim() ?? "";
+                string subName   = reader.IsDBNull(reader.GetOrdinal("subgrupo")) ? "" : reader.GetString(reader.GetOrdinal("subgrupo"))?.Trim() ?? "";
                 if (string.IsNullOrEmpty(groupName)) continue;
 
                 if (!grupos.TryGetValue(groupName, out var set))
@@ -156,10 +156,10 @@ namespace WorkerService1
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                string doc     = reader.GetString("documento");
-                string codigo  = reader.GetString("codigo").Trim();
-                int    cantidad = (int)reader.GetDouble("cantidad");
-                double precio  = reader.GetDouble("precio");
+                string doc     = reader.GetString(reader.GetOrdinal("documento"));
+                string codigo  = reader.GetString(reader.GetOrdinal("codigo")).Trim();
+                int    cantidad = (int)reader.GetDouble(reader.GetOrdinal("cantidad"));
+                double precio  = reader.GetDouble(reader.GetOrdinal("precio"));
                 if (!groups.TryGetValue(doc, out var list))
                 {
                     list = new List<PedLine>();

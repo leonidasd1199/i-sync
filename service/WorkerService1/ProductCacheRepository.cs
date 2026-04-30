@@ -73,14 +73,14 @@ namespace WorkerService1
             await using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())
             {
-                string sku   = reader.GetString("sku");
-                string grupo = reader.IsDBNull(reader.GetOrdinal("last_grupo"))    ? "" : reader.GetString("last_grupo");
-                string sub   = reader.IsDBNull(reader.GetOrdinal("last_subgrupo")) ? "" : reader.GetString("last_subgrupo");
+                string sku   = reader.GetString(reader.GetOrdinal("sku"));
+                string grupo = reader.IsDBNull(reader.GetOrdinal("last_grupo"))    ? "" : reader.GetString(reader.GetOrdinal("last_grupo"));
+                string sub   = reader.IsDBNull(reader.GetOrdinal("last_subgrupo")) ? "" : reader.GetString(reader.GetOrdinal("last_subgrupo"));
                 map[sku] = new ShopifyProductEntry(
-                    reader.GetInt64("product_id"),
-                    reader.GetInt64("variant_id"),
-                    reader.GetInt64("inventory_item_id"),
-                    reader.GetInt32("last_inventory"),
+                    reader.GetInt64(reader.GetOrdinal("product_id")),
+                    reader.GetInt64(reader.GetOrdinal("variant_id")),
+                    reader.GetInt64(reader.GetOrdinal("inventory_item_id")),
+                    reader.GetInt32(reader.GetOrdinal("last_inventory")),
                     grupo, sub);
             }
 
