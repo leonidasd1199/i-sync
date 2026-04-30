@@ -17,7 +17,6 @@ IHost host = Host.CreateDefaultBuilder(args)
     {
         logging.ClearProviders();
         logging.AddConsole();
-        logging.AddEventLog(); // Windows Event Log (optional, useful for services)
     })
     .Build();
 
