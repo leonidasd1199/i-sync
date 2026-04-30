@@ -1,0 +1,21 @@
+# Build outputs
+bin/
+obj/
+publish/
+
+# Compiled artifacts (when published to project root)
+*.dll
+*.exe
+*.pdb
+
+# User secrets and local overrides
+appsettings.*.json
+!appsettings.json
+
+# .NET tools
+.vs/
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
