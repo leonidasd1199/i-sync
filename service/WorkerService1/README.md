@@ -1,5 +1,7 @@
 # SpySync — Shopify ↔ ERP Sync Service
 
+![CI](https://github.com/leonidasd1199/SpySync/actions/workflows/ci.yml/badge.svg)
+
 A .NET 8 Windows Worker Service that keeps a Shopify storefront in real-time sync with a legacy Latin American ERP system. It runs as a background Windows Service and handles product publishing, inventory deltas, order ingestion, and collection management automatically.
 
 ---
