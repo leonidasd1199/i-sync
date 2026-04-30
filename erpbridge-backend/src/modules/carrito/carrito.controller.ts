@@ -1,6 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, Query, Req, UseGuards, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
 import { CarritoService } from './carrito.service';
 
 @UseGuards(AuthGuard('jwt'))
@@ -10,7 +9,7 @@ export class CarritoController {
 
   // GET /carrito/version/:cliente  — lightweight poll, returns only { version }
   @Get('version/:cliente')
-  getVersion(@Req() req: Request, @Param('cliente') cliente: string) {
+  getVersion(@Req() req: any, @Param('cliente') cliente: string) {
     if (!cliente?.trim()) throw new BadRequestException('Código de cliente es requerido.');
     if ((req.user as any).sub !== cliente) throw new ForbiddenException();
     return this.service.getVersion(cliente);
@@ -19,7 +18,7 @@ export class CarritoController {
   // GET /carrito/:cliente?empresa=001000&agencia=001  — full cart enriched from ERP
   @Get(':cliente')
   getCart(
-    @Req() req: Request,
+    @Req() req: any,
     @Param('cliente') cliente: string,
     @Query('empresa') empresa = '001000',
     @Query('agencia') agencia = '001',
@@ -31,7 +30,7 @@ export class CarritoController {
 
   // POST /carrito/item  — add or update one item  { cliente, codigo, cantidad }
   @Post('item')
-  addOrUpdateItem(@Req() req: Request, @Body() body: { cliente?: string; codigo?: string; cantidad?: number }) {
+  addOrUpdateItem(@Req() req: any, @Body() body: { cliente?: string; codigo?: string; cantidad?: number }) {
     const { cliente, codigo, cantidad } = body;
     if (!cliente?.trim()) throw new BadRequestException('Falta: cliente');
     if (!codigo?.trim())  throw new BadRequestException('Falta: codigo');
@@ -44,7 +43,7 @@ export class CarritoController {
   // DELETE /carrito/item/:cliente/:codigo  — remove one item
   @Delete('item/:cliente/:codigo')
   removeItem(
-    @Req() req: Request,
+    @Req() req: any,
     @Param('cliente') cliente: string,
     @Param('codigo')  codigo: string,
   ) {
@@ -56,7 +55,7 @@ export class CarritoController {
 
   // DELETE /carrito/:cliente  — clear entire cart
   @Delete(':cliente')
-  clear(@Req() req: Request, @Param('cliente') cliente: string) {
+  clear(@Req() req: any, @Param('cliente') cliente: string) {
     if (!cliente?.trim()) throw new BadRequestException('Código de cliente es requerido.');
     if ((req.user as any).sub !== cliente) throw new ForbiddenException();
     return this.service.clear(cliente);
