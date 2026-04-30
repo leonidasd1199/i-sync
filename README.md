@@ -1,5 +1,7 @@
 # ERPBridge
 
+![CI](https://github.com/leonidasd1199/i-sync/actions/workflows/ci.yml/badge.svg)
+
 A full-stack B2B ordering platform built for a Latin American distribution company. Clients browse a live product catalog, manage a cart, and submit orders that are inserted directly into the company's ERP system.
 
 ## Screenshots
