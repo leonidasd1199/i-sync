@@ -1,105 +1,128 @@
-# ERPWorker - Shopify ↔ ERP Sync Service
+# SpySync — Shopify ↔ ERP Sync Service
 
-Servicio de Windows (.NET 8 Worker Service) que sincroniza:
-- **Productos ERP → Shopify** (nombre, precio, tags, inventario)
-- **Órdenes Shopify → ERP** (PED en operti/opermv con descuento de existencia)
-- **Smart Collections** (grupos/subgrupos → colecciones automáticas)
+A .NET 8 Windows Worker Service that keeps a Shopify storefront in sync with a legacy ERP system in real time.
 
 ---
 
-## Requisitos
+## What it does
 
-- Windows Server 2019+ (o Windows 10/11)
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- MySQL 5.7+ / MariaDB 10.3+ accesible
-- Shopify Admin API access token con permisos de productos, inventario y órdenes
+- **ERP → Shopify products** — pushes product name, price, tags, and inventory levels on a configurable interval
+- **Shopify → ERP orders** — ingests new Shopify orders as PED documents (`operti` / `opermv`) with inventory deduction
+- **Smart Collections** — auto-creates Shopify collections from ERP product groups and subgroups
+- **ERP PED mirroring** — manually created ERP orders are reflected as Shopify orders (tagged `ERP-MANUAL`) so committed inventory stays accurate on both sides
 
 ---
 
-## Configuración
+## Screenshots
 
-Editar `appsettings.json` con los datos reales:
+![Sync cycle console output](docs/console_cycle.png)
+
+![Shopify products](docs/shopify_products.png)
+
+![Product detail](docs/shopify_details.png)
+
+![Smart Collections](docs/shopify_collections.png)
+
+![Store overview](docs/store_details.png)
+
+![Payment summary](docs/store_payment_resume.png)
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | .NET 8 Worker Service (Windows Service) |
+| Database | MySQL via `MySql.Data` |
+| HTTP client | `HttpClient` with Shopify Admin REST API |
+| Serialization | Newtonsoft.Json (typed DTOs) |
+| Config | `IOptions<T>` bound from `appsettings.json` |
+| Logging | `ILogger<T>` structured logging |
+
+---
+
+## Architecture
+
+SQL is separated from orchestration logic using a repository pattern:
+
+```
+Worker.cs                  — main loop, Shopify HTTP calls, cycle scheduling
+DbBootstrapService.cs      — schema migrations on startup (tables, columns, SPs)
+ProductCacheRepository.cs  — shopify_products cache + order sync bookmark
+ErpOrderRepository.cs      — order creation, inventory queries, decimal config
+ErpCatalogRepository.cs    — active products, SKU set, groups, unlinked PEDs
+ShopifyModels.cs           — typed Shopify API DTOs
+ShopifySettings.cs         — strongly-typed configuration model
+```
+
+---
+
+## Configuration
+
+Copy `appsettings.json` and fill in your values:
 
 ```json
 {
   "ShopifySettings": {
-    "ConnectionString": "Server=TU_IP;Port=3306;Database=admin001000;Uid=TU_USER;Pwd=TU_PASSWORD;SslMode=None;",
-    "AccessToken": "shpat_TU_TOKEN_REAL",
-    "StoreUrl": "tu-tienda.myshopify.com",
+    "ConnectionString": "Server=YOUR_HOST;Port=3306;Database=YOUR_DB;Uid=YOUR_USER;Pwd=YOUR_PASSWORD;SslMode=None;",
+    "AccessToken": "shpat_YOUR_SHOPIFY_ACCESS_TOKEN",
+    "StoreUrl": "your-store.myshopify.com",
     "ApiVersion": "2024-10",
-    "LocationId": "TU_LOCATION_ID",
+    "LocationId": "YOUR_SHOPIFY_LOCATION_ID",
     "Almacen": "01",
-    "AlertEmails": "correo@dominio.com",
-    "ServiceName": "ERPWorker",
+    "Empresa": "YOUR_ERP_EMPRESA",
+    "Agencia": "YOUR_ERP_AGENCIA",
+    "DbName": "YOUR_DB_NAME",
+    "AlertEmails": "your@email.com",
+    "SmtpUser": "your@gmail.com",
+    "SmtpPass": "your-gmail-app-password",
     "DefaultClientCode": "CLI001",
     "DefaultVendedor": "VEND01",
     "DefaultTipoPrecio": 1,
-    "DefaultEstacion": "01"
+    "DefaultEstacion": "WEB",
+    "DefaultUemisor": "WORKER"
   }
 }
 ```
 
 ---
 
-## Compilar
+## Build & run
 
 ```bash
-cd WorkerService1
 dotnet restore
 dotnet build -c Release
 dotnet publish -c Release -o ./publish
-```
 
----
-
-## Ejecutar como consola (para pruebas)
-
-```bash
+# Run as console (for testing)
 cd publish
 dotnet WorkerService1.dll
 ```
 
 ---
 
-## Instalar como Servicio de Windows
+## Install as a Windows Service
 
-Desde una terminal **Administrador (CMD o PowerShell)**:
+From an **elevated** terminal:
 
 ```powershell
-sc.exe create ERPWorker binPath="C:\ruta\completa\publish\WorkerService1.exe" start=auto
-sc.exe description ERPWorker "Sincronización ERP-Shopify"
-sc.exe start ERPWorker
+sc.exe create SpySync binPath="C:\path\to\publish\WorkerService1.exe" start=auto
+sc.exe description SpySync "Shopify-ERP real-time sync"
+sc.exe start SpySync
 ```
 
-### Desinstalar servicio
-
 ```powershell
-sc.exe stop ERPWorker
-sc.exe delete ERPWorker
+# Uninstall
+sc.exe stop SpySync
+sc.exe delete SpySync
 ```
 
 ---
 
-## Estructura del proyecto
+## Requirements
 
-```
-WorkerService1/
-├── WorkerService1.csproj    # Proyecto .NET 8 Worker
-├── Program.cs               # Entry point + DI + Windows Service config
-├── Worker.cs                # Lógica principal del servicio (sync loop)
-├── ShopifySettings.cs       # Modelo de configuración (IOptions)
-├── ShopifySyncHelpers.cs    # Helpers estáticos (sync state, inventario, fechas)
-├── appsettings.json         # Configuración (editar con datos reales)
-└── README.md                # Este archivo
-```
-
----
-
-## Notas importantes
-
-- El servicio crea automáticamente la tabla `shopify_sync_state` y las columnas auxiliares en la BD al iniciar.
-- El stored procedure `ActualizarExistenciaFromShopify` y la función `ValidarExistenciaWeSync` se crean automáticamente si no existen.
-- El ciclo de sync corre cada **5 segundos**.
-- Hay un heartbeat en consola cada **30 segundos** para confirmar que el servicio está vivo.
-- Si se pierde internet, reintenta cada 10 segundos.
-- Las credenciales SMTP para alertas de downtime están hardcodeadas en Worker.cs — cambiarlas según necesidad.
+- Windows Server 2019+ or Windows 10/11
+- [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+- MySQL 5.7+ / MariaDB 10.3+
+- Shopify Admin API token with `read_products`, `write_products`, `read_orders`, `write_orders`, `read_inventory`, `write_inventory` scopes
